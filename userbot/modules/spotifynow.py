@@ -9,10 +9,11 @@ from userbot import CMD_HELP, TEMP_DOWNLOAD_DIRECTORY, bot
 from userbot.events import register
 
 
-@register(outgoing=True, pattern=r"^\.spotnow$")
+@register(outgoing=True, pattern=r"^\.spotnow (.*)")
 async def _(event):
     if event.fwd_from:
         return
+    input_str = event.pattern_match.group(1)
     chat = "@SpotifyNowBot"
     now = f"/now"
     await event.edit("`Processing...`")
@@ -37,16 +38,30 @@ async def _(event):
                 await event.client.delete_messages(conv.chat_id, [msg.id, response.id])
                 return
             else:
-                downloaded_file_name = await event.client.download_media(
-                    response.media, TEMP_DOWNLOAD_DIRECTORY
-                )
-                link = response.reply_markup.rows[0].buttons[0].url
-                await event.client.send_file(
-                    event.chat_id,
-                    downloaded_file_name,
-                    force_document=False,
-                    caption=f"[Play on Spotify]({link})",
-                )
+                if input_str == "s":
+                    downloaded_file_name = await event.client.download_media(
+                        response.media, TEMP_DOWNLOAD_DIRECTORY + "spot.webp"
+                    )
+                    link = response.reply_markup.rows[0].buttons[0].url
+                    spot = await event.client.send_file(
+                        event.chat_id,
+                        downloaded_file_name,
+                        force_document=False,
+                    )
+                    await event.respond(
+                        f"[Play on Spotify]({link})", reply_to=spot, link_preview=False
+                    )
+                elif input_str == "":
+                    downloaded_file_name = await event.client.download_media(
+                        response.media, TEMP_DOWNLOAD_DIRECTORY
+                    )
+                    link = response.reply_markup.rows[0].buttons[0].url
+                    await event.client.send_file(
+                        event.chat_id,
+                        downloaded_file_name,
+                        force_document=False,
+                        caption=f"[Play on Spotify]({link})",
+                    )
                 """cleanup chat after completed"""
                 await event.client.delete_messages(conv.chat_id, [msg.id, response.id])
         await event.delete()
